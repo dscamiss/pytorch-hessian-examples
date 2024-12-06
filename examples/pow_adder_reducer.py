@@ -7,14 +7,16 @@ from torch import Tensor
 from torch.autograd.functional import hessian
 from typeguard import typechecked as typechecker
 
+from examples.common import set_seed
+
 
 @jaxtyped(typechecker=typechecker)
 def pow_adder_reducer(x: Float[Tensor, "..."], y: Float[Tensor, "..."]) -> Float[Tensor, ""]:
     """Sum a linear combination of the squared components of two tensors.
 
     Args:
-        x: First input tensor.
-        y: Second input tensor.
+        x: Input tensor 1.
+        y: Input tensor 2.
 
     Returns:
         Scalar output tensor.
@@ -53,7 +55,7 @@ def demo_pow_adder_reducer() -> None:
 
     where v (*) w is the Hadamard (elementwise) product of v and w.
 
-    Applying the Leibniz rule, the first order total derivative of f at x is
+    Applying the Leibniz rule, the first-order total derivative of f at x is
 
         df(x, y).(v, w) = 2 <1_n, ds(x).v> + 3 <1_n, ds(y).w>
 
@@ -81,14 +83,14 @@ def demo_pow_adder_reducer() -> None:
     x = torch.randn(4)
     y = torch.randn(x.shape)
 
-    # Compute autograd (numerical) Hessian
+    # Compute autograd Hessian
     # - For a 2-tuple input (x, y) where each component has shape (n), this is
     #   a tuple of tuples `h` such that:
     #
-    #       h[0][0] = Hess_{x,x} f(x, y) has shape (n, n)
-    #       h[0][1] = Hess_{x,y} f(x, y) has shape (n, n)
-    #       h[1][0] = Hess_{y,x} f(x, y) has shape (n, n)
-    #       h[1][1] = Hess_{y,y} f(x, y) has shape (n, n)
+    #       h[0][0] ~ Hess_{x,x} f(x, y) has shape (n, n)
+    #       h[0][1] ~ Hess_{x,y} f(x, y) has shape (n, n)
+    #       h[1][0] ~ Hess_{y,x} f(x, y) has shape (n, n)
+    #       h[1][1] ~ Hess_{y,y} f(x, y) has shape (n, n)
     #
     hess_autograd = hessian(pow_adder_reducer, (x, y))
 
@@ -115,7 +117,7 @@ def demo_pow_adder_reducer() -> None:
     x = torch.randn(4, 5, 6)
     y = torch.randn(x.shape)
 
-    # Compute autograd (numerical) Hessian
+    # Compute autograd Hessian
     # - For a 2-tuple input (x, y) where each component has shape (n, m, p),
     #   this is a tuple of tuples `h` such that:
     #
@@ -163,4 +165,5 @@ def demo_pow_adder_reducer() -> None:
 
 
 if __name__ == "__main__":
+    set_seed()
     demo_pow_adder_reducer()

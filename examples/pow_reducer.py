@@ -7,6 +7,8 @@ from torch import Tensor
 from torch.autograd.functional import hessian
 from typeguard import typechecked as typechecker
 
+from examples.common import set_seed
+
 
 @jaxtyped(typechecker=typechecker)
 def pow_reducer(x: Float[Tensor, "..."]) -> Float[Tensor, ""]:
@@ -64,7 +66,7 @@ def demo_pow_reducer() -> None:
     # Case 1: Vector input
     x = torch.randn(4)
 
-    # Compute autograd (numerical) Hessian
+    # Compute autograd Hessian
     # - For an input of size (n), this has shape (n, n)
     hess_autograd = hessian(pow_reducer, x)
 
@@ -78,7 +80,7 @@ def demo_pow_reducer() -> None:
     # Case 2: Higher-order tensor input
     x = torch.randn(4, 5, 6)
 
-    # Compute autograd (numerical) Hessian
+    # Compute autograd Hessian
     # - For an input of size (n, m, p), this has shape (n, m, p, n, m, p)
     hess_autograd = hessian(pow_reducer, x)
 
@@ -94,4 +96,5 @@ def demo_pow_reducer() -> None:
 
 
 if __name__ == "__main__":
+    set_seed()
     demo_pow_reducer()
