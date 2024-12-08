@@ -15,8 +15,8 @@ def pow_adder_reducer(x: Float[Tensor, "..."], y: Float[Tensor, "..."]) -> Float
     """Sum a linear combination of the squared components of two tensors.
 
     Args:
-        x: Input tensor 1.
-        y: Input tensor 2.
+        x: Input tensor for summand 1.
+        y: Input tensor for summand 2.
 
     Returns:
         Scalar output tensor.
@@ -30,54 +30,50 @@ def pow_adder_reducer(x: Float[Tensor, "..."], y: Float[Tensor, "..."]) -> Float
     if x.shape != y.shape:
         raise ValueError("Shape mismatch between x and y arguments")
 
-    return (2.0 * x.pow(2.0) + 3.0 * y.pow(2.0)).sum()  # Sums all compoennts
+    return (2.0 * x.pow(2.0) + 3.0 * y.pow(2.0)).sum()
 
 
 def demo_pow_adder_reducer() -> None:
-    """Demo Hessian calculation for the `pow_adder_reducer()` function.
+    """Demo Hessian calculation for `pow_adder_reducer()`.
 
-    To evaluate the Hessians of f = `pow_adder_reducer()`, assume that
-    x = vec(x) and y = vec(y), where the "vectorizing" map uses the same
-    component ordering as `torch.flatten()`.
-
-    Observe that f(x, y) can be written as
+    Observe that f: R^n x R^n --> R can be written as
 
         f(x, y) = 2 <1_n, s(x)> + 3 <1_n, s(y)>
 
-    where <.,.> is the Euclidean inner product on R^n, 1_n is the all 1's
-    vector in R^n, and s: R^n --> R^n is the map
+    where
 
-        s(x) = ((x^1)^2, ..., (x^n)^2)^t.
+        * <.,.> is the Euclidean inner product on R^n,
+        * 1_n is the all 1's vector in R^n, and
+        * s: R^n --> R^n is the map s(x) = ((x^1)^2, ..., (x^n)^2)^t.
 
-    The second total derivative of s at x is
+    The second-order total derivative of s at x is the map
 
-        d^2 s(x).(v, w) = 2 v (*) w
+        d^2 s(x).(x1, x2) = 2 x1 (*) x2,
 
     where v (*) w is the Hadamard (elementwise) product of v and w.
 
-    Applying the Leibniz rule, the first-order total derivative of f at x is
+    Applying the Leibniz rule, the first-order total derivative of f at (x, y)
+    is the map
 
-        df(x, y).(v, w) = 2 <1_n, ds(x).v> + 3 <1_n, ds(y).w>
+        df(x, y).(x1, y1) = 2 <1_n, ds(x).x1> + 3 <1_n, ds(y).y1>.
 
-    and the second-order total derivative of f at x is
+    The second-order total derivative of f at (x, y) is the map
 
-        d^2 f(x, y).((v, w), (a, b))
-            = 2 <1_n, d^2 s(x).(v, a)> + 3 <1_n, d^2 s(y).(w, b)>
-            = 4 <1_n, v (*) a> + 6 <1_n, w (*) b>
+        d^2 f(x, y).((x1, y1), (x2, y2))
+            = 2 <1_n, d^2 s(x).(x1, x2)> + 3 <1_n, d^2 s(y).(y1, y2)>
+            = 4 <1_n, x1 (*) x2> + 6 <1_n, y1 (*) y2>.
 
-    or alternatively
-
-        d^2 f(x, y).((v, w), (a, b))
-            = 4 sum_{i=1}^{n} v^i a^i + 6 sum_{i=1}^{n} w^i b^i.
-
-    In other words, the Hessian of f at (x, y) is the block-diagonal matrix
+    This implies that
 
         Hess(f)(x, y) = [Hess_{x,x} f(x, y)  Hess_{x,y} f(x, y)]
                         [Hess_{y,x} f(x, y)  Hess_{y,y} f(x, y)]
                       = [4 I_n    Z_n]
                         [  Z_n  6 I_n],
 
-    where I_n is the n-by-n identity matrix and Z_n is the n-by-n zero matrix.
+    where
+
+        * I_n is the n-by-n identity matrix, and
+        * Z_n is the n-by-n zero matrix.
     """
     # Case 1: Vector inputs
     x = torch.randn(4)
@@ -87,10 +83,10 @@ def demo_pow_adder_reducer() -> None:
     # - For a 2-tuple input (x, y) where each component has shape (n), this is
     #   a tuple of tuples `h` such that:
     #
-    #       h[0][0] ~ Hess_{x,x} f(x, y) has shape (n, n)
-    #       h[0][1] ~ Hess_{x,y} f(x, y) has shape (n, n)
-    #       h[1][0] ~ Hess_{y,x} f(x, y) has shape (n, n)
-    #       h[1][1] ~ Hess_{y,y} f(x, y) has shape (n, n)
+    #       h[0][0] = Hess_{x,x} f(x, y)
+    #       h[0][1] = Hess_{x,y} f(x, y)
+    #       h[1][0] = Hess_{y,x} f(x, y)
+    #       h[1][1] = Hess_{y,y} f(x, y)
     #
     hess_autograd = hessian(pow_adder_reducer, (x, y))
 
@@ -101,17 +97,17 @@ def demo_pow_adder_reducer() -> None:
     hess_expected_yx = hess_expected_xy
 
     # Compare blocks of autograd and expected Hessians
-    err_msg = "Mismatched Hessians of pow_adder_reducer() for vector inputs"
+    err_msg = "Mismatched Hessians of pow_adder_reducer() for vector inputs: "
 
     hess_autograd_xx = hess_autograd[0][0]
     hess_autograd_xy = hess_autograd[0][1]
     hess_autograd_yx = hess_autograd[1][0]
     hess_autograd_yy = hess_autograd[1][1]
 
-    assert torch.all(hess_autograd_xx == hess_expected_xx), err_msg
-    assert torch.all(hess_autograd_xy == hess_expected_xy), err_msg
-    assert torch.all(hess_autograd_yx == hess_expected_yx), err_msg
-    assert torch.all(hess_autograd_yy == hess_expected_yy), err_msg
+    assert torch.all(hess_autograd_xx == hess_expected_xx), err_msg + "(x, x)"
+    assert torch.all(hess_autograd_xy == hess_expected_xy), err_msg + "(x, y)"
+    assert torch.all(hess_autograd_yx == hess_expected_yx), err_msg + "(y, x)"
+    assert torch.all(hess_autograd_yy == hess_expected_yy), err_msg + "(y, y)"
 
     # Case 2: Higher-order tensor inputs
     x = torch.randn(4, 5, 6)
@@ -126,15 +122,10 @@ def demo_pow_adder_reducer() -> None:
     #       h[1][0] ~ Hess_{y,x} f(x, y) has shape (n, m, p, n, m, p)
     #       h[1][1] ~ Hess_{y,y} f(x, y) has shape (n, m, p, n, m, p)
     #
-    # - Specifically, we have the relationships
+    #   The tilde ~ means "represents".
     #
-    #       mat(h[0][0]) = Hess_{vec(x), vec(y)} f(vec(x), vec(y))
-    #       mat(h[0][0]) = Hess_{vec(x), vec(y)} f(vec(x), vec(y))
-    #       mat(h[0][0]) = Hess_{vec(y), vec(x)} f(vec(x), vec(y))
-    #       mat(h[0][0]) = Hess_{vec(y), vec(y)} f(vec(x), vec(y))
-    #
-    #   where mat is the inverse of the "vectorization" map.
-    #
+    #   The actual Hessian matrices can be recovered by reshaping each h[i][j],
+    #   as in the actual/expected comparisons below.
     hess_autograd = hessian(pow_adder_reducer, (x, y))
 
     # Compute blocks of expected (analytical) Hessian
@@ -149,17 +140,17 @@ def demo_pow_adder_reducer() -> None:
     yy_shape = hess_expected_yy.shape
 
     # Compare blocks of autograd and expected Hessians
-    err_msg = "Mismatched Hessians of pow_adder_reducer() for higher-order tensor inputs"
+    err_msg = "Mismatched Hessians of pow_adder_reducer() for higher-order tensor inputs: "
 
     hess_autograd_xx = hess_autograd[0][0]
     hess_autograd_xy = hess_autograd[0][1]
     hess_autograd_yx = hess_autograd[1][0]
     hess_autograd_yy = hess_autograd[1][1]
 
-    assert torch.all(hess_autograd_xx.reshape(xx_shape) == hess_expected_xx), err_msg
-    assert torch.all(hess_autograd_xy.reshape(xy_shape) == hess_expected_xy), err_msg
-    assert torch.all(hess_autograd_yx.reshape(yx_shape) == hess_expected_yx), err_msg
-    assert torch.all(hess_autograd_yy.reshape(yy_shape) == hess_expected_yy), err_msg
+    assert torch.all(hess_autograd_xx.reshape(xx_shape) == hess_expected_xx), err_msg + "(x, x)"
+    assert torch.all(hess_autograd_xy.reshape(xy_shape) == hess_expected_xy), err_msg + "(x, y)"
+    assert torch.all(hess_autograd_yx.reshape(yx_shape) == hess_expected_yx), err_msg + "(y, x)"
+    assert torch.all(hess_autograd_yy.reshape(yy_shape) == hess_expected_yy), err_msg + "(y, y)"
 
     print(emoji.emojize(":sparkles: success! :sparkles:"))
 

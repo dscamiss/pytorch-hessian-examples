@@ -23,51 +23,50 @@ def pow_reducer(x: Float[Tensor, "..."]) -> Float[Tensor, ""]:
     Reference:
         https://pytorch.org/docs/stable/generated/torch.autograd.functional.hessian.html
     """
-    return x.pow(3.0).sum()  # Sums all components
+    return x.pow(3.0).sum()
 
 
 def demo_pow_reducer() -> None:
-    """Demo Hessian calculation for the `pow_reducer()` function.
+    """Demo Hessian calculation for `pow_reducer()`.
 
-    To evaluate the Hessians of f = `pow_reducer()`, assume that x = vec(x)
-    where the "vectorizing" map uses the same component ordering as
-    `torch.flatten()`.
-
-    Observe that f(x) can be written as
+    Observe that f: R^n --> R can be written as
 
         f(x) = <1_n, k(x)>,
 
-    where <.,.> is the Euclidean inner product on R^n, 1_n is the all 1's
-    vector in R^n, and k: R^n --> R^n is the map
+    where
 
-        k(x) = ((x^1)^3, ..., (x^n)^3)^t.
+        * <.,.> is the Euclidean inner product on R^n,
+        * 1_n is the all 1's vector in R^n, and
+        * k: R^n --> R^n is the map k(x) = ((x^1)^3, ..., (x^n)^3)^t.
 
-    By a straightforward computation, the second total derivative of k at x is
+    The second-order total derivative of k at x is the map
 
-        d^2 k(x).(v, w) = (6x^1, ..., 6x^n)^t (*) v (*) w
-                        = 6x (*) v (*) w
+        d^2 k(x).(x1, x2) = 6x (*) x1 (*) x2,
 
-    where x (*) y is the Hadamard (elementwise) product of x and y.
+    where v (*) w is the Hadamard (elementwise) product of v and w.
 
-    Applying the Leibniz rule, the second total derivative of f at x is
+    Applying the Leibniz rule, the first-order total derivative of f at x is
+    the map
 
-        d^2 f(x).(v, w) = <1_n, d^2 k(x).(v, w)>
-                        = 6 <1_n, x (*) v (*) w>
+        df(x).x1 = <1_n, dk(x).x1.
 
-    or alternatively
+    The second-order total derivative of f at x is the map
 
-        d^2 f(x).(v, w) = 6 sum_{i=1}^{n} x^i v^i w^i
-                        = v^t (6 diag(x)) w.
+        d^2 f(x).(x1, x2) = <1_n, d^2 k(x).(x1, x2)>
+                          = 6 <1_n, x (*) x1 (*) x2>.
 
-    In other words, the Hessian of f at x is the diagonal matrix
+    This implies that
 
-        Hess(f)(x) = 6 diag(x).
+        Hess(f)(x) = 6 diag(x),
+
+    where diag(x) is the n-by-n matrix with diag(x)_{i, i} = x^i.
     """
     # Case 1: Vector input
     x = torch.randn(4)
 
     # Compute autograd Hessian
-    # - For an input of size (n), this has shape (n, n)
+    # - For an input x of size (n), this has shape (n, n) and is equal to
+    #   Hess f(x).
     hess_autograd = hessian(pow_reducer, x)
 
     # Compute expected (analytical) Hessian
@@ -81,7 +80,9 @@ def demo_pow_reducer() -> None:
     x = torch.randn(4, 5, 6)
 
     # Compute autograd Hessian
-    # - For an input of size (n, m, p), this has shape (n, m, p, n, m, p)
+    # - For an input of size (n, m, p), this has shape (n, m, p, n, m, p) and
+    #   represents Hess f(x).  The actual Hessian matrix can be recovered by
+    #   reshaping, as in the actual/expected comparison below.
     hess_autograd = hessian(pow_reducer, x)
 
     # Compute expected (analytical) Hessian for vectorized x

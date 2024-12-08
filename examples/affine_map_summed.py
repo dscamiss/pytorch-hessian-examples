@@ -32,68 +32,83 @@ def affine_map_summed(
 def demo_affine_map_summed() -> None:
     """Demo Hessian calculation for `affine_map_summed()`.
 
-    To evaluate the Hessians of f = `affine_map_summed()`, assume that
-    W = vec(W), where the "vectorizing" map uses the same component ordering
-    as `torch.flatten()`.
+    Observe that f: R^{n x m} x R^n x R^m -> R can be written as
 
-    Observe that f(W, b, x) can be written as
+        f(W, b, x) = <1_n, ReLU(W x + b)>,
 
-        f(W, b, x) = <1_n, ReLU(mat(W)x + b)>,
+    where
 
-    where <.,.> is the Euclidean inner product on R^n, 1_k is the all 1's
-    vector in R^k, and mat is the inverse of vec.
+        * <.,.> is the Euclidean inner product on R^n, and
+        * 1_n is the all 1's vector in R^n.
 
-    Applying the Leibniz rule, the first order total derivative of f at
-    (W, b, x) is
+    Applying the Leibniz rule, the first-order total derivative of f at
+    (W, b, x) is the map
 
-        df(W, b, x).(p1, q1, r1) = <1_n, ReLU'(z) (*) mat(p1)x> +
-                                   <1_n, ReLU'(z) (*) q1> +
-                                   <1_n, ReLU'(z) (*) mat(W)r1>,
+        df(W, b, x).(W1, b1, x1) = <1_n, ReLU'(z) (*) W1 x> +
+                                   <1_n, ReLU'(z) (*) b1> +
+                                   <1_n, ReLU'(z) (*) W x1>,
 
-    where z = mat(W)x + b and v (*) w is the Hadamard (elementwise) product
-    of v and w.
+    where
 
-    The second-order total derivative of f at (W, b, x) is
+        * z = W x + b, and
+        * v (*) w is the Hadamard (elementwise) product of v and w.
 
-        d^2 f(W, b, x).((p1, q1, r1), (p2, q2, r2)) =
-            <1_n, ReLU''(z) (*) mat(p1)x (*) mat(p2)x> +
-            <1_n, ReLU''(z) (*) mat(p1)x (*) q2> +
-            <1_n, ReLU''(z) (*) mat(p1)x (*) mat(W)r2> + <1_n, ReLU'(z) (*) mat(p1)r2> +
-            <1_n, ReLU''(z) (*) q1 (*) mat(p2)x> +
-            <1_n, ReLU''(z) (*) q1 (*) q2> +
-            <1_n, ReLU''(z) (*) q1 (*) mat(W)r2> +
-            <1_n, ReLU''(z) (*) mat(W)r1 (*) mat(p2)x> + <1_n, ReLU'(z) (*) mat(p2)r1> +
-            <1_n, ReLU''(z) (*) mat(W)r1 (*) q2> +
-            <1_n, ReLU''(z) (*) mat(W)r1 (*) mat(W)r2>.
+    The second-order total derivative of f at (W, b, x) is the map
 
-    Since ReLU'' = 0, this simplifies to
+        d^2 f(W, b, x).((W1, b1, x1), (W2, b2, x2)) =
+            <1_n, ReLU''(z) (*) W1 x (*) W2 x> +
+            <1_n, ReLU''(z) (*) W1 x (*) b2> +
+            <1_n, ReLU''(z) (*) W1 x (*) W x2> + <1_n, ReLU'(z) (*) W1 x2> +
+            <1_n, ReLU''(z) (*) b1 (*) W2 x> +
+            <1_n, ReLU''(z) (*) b1 (*) b2> +
+            <1_n, ReLU''(z) (*) b1 (*) W x2> +
+            <1_n, ReLU''(z) (*) W x1 (*) W2 x> + <1_n, ReLU'(z) (*) W2 x1> +
+            <1_n, ReLU''(z) (*) W x1 (*) b2> +
+            <1_n, ReLU''(z) (*) W x1 (*) W x2>.
 
-        d^2 f(W, b, x).((p1, q1, r1), (p2, q2, r2)) =
-            <1_n, ReLU'(z) (*) mat(p1)r2> + <1_n, ReLU'(z) (*) mat(p2)r1>
+    Since ReLU'' = 0 (where it is well-defined), this simplifies to
 
-    or alternatively
+        d^2 f(W, b, x).((W1, b1, x1), (W2, b2, x2)) =
+            <1_n, ReLU'(z) (*) (W1 x2)> + <1_n, ReLU'(z) (*) (W2 x1)>.
 
-        d^2 f(W, b, x).((p1, q1, r1), (p2, q2, r2)) =
-            sum_{i=1}^{n} ReLU'(z)^i sum_{j=1}^{m} mat(p1)_{i,j} r2^j +
-            sum_{i=1}^{n} ReLU'(z)^i sum_{j=1}^{m} mat(p2)_{i,j} r1^j.
-
-    This is equivalent to
+    This implies that
 
         Hess(f)(W, b, x)
             = [Hess_{W, W} f(#)  Hess_{W, b} f(#)  Hess_{W, x} f(#)]
               [Hess_{b, W} f(#)  Hess_{b, b} f(#)  Hess_{b, x} f(#)]
               [Hess_{x, W} f(#)  Hess_{x, b} f(#)  Hess_{x, x} f(#)]
-            = [Z_{nm,nm}    Z_{nm,n}  k (X) I_m]
-              [Z_{n,nm}     Z_{n,n}   Z_{n,m}  ]
-              [k^t (X) I_m  Z_{m,n}   Z_{m,n}  ]
+            = [Z_{nm,nm}           Z_{nm,n}  ReLU'(z) (X) I_m]
+              [Z_{n,nm}            Z_{n,n}   Z_{n,m}         ]
+              [ReLU'(z)^t (X) I_m  Z_{m,n}   Z_{m,n}         ],
 
     where
 
         * # is shorthand for (W, b, x),
-        * Z_{s,t} is the s-by-t zero matrix,
-        * I_n is the n-by-n identity matrix,
-        * k = ReLU'(z) (*) 1_n, and
-        * (X) is the Kronecker product.
+        * Z_{k,l} is the k-by-l zero matrix,
+        * I_m is the m-by-m identity matrix, and
+        * A (X) B is the Kronecker product of A and B.
+
+    For example, Hess_{W, x} f(#) is the nm-by-n matrix M such that
+
+        vec(W)^t M x = <1_n, ReLU'(z) (*) (W x)>.
+
+    Using the identity (see, e.g., the Matrix Cookbook)
+
+        vec(A)^t (D (X) B) c = trace(A^t B c D^t)
+
+    we see that
+
+        vec(W)^t [ReLU'(z) (X) I_m] x
+            = trace(W I_m x ReLU'(z)')
+            = trace(W x ReLU'(z)^t)
+            = trace(ReLU'(z)^t W x)
+            = <1_n, ReLU'(z) (*) (W x)>,
+
+    so that M = ReLU'(z) (X) I_m.
+
+    By symmetry,
+
+        Hess_{x, W} f(#) = (ReLU'(z) (X) I_m)^t = ReLU'(z)^t (X) I_m.
     """
     n, m = 3, 4
     W = torch.randn(n, m)
@@ -102,7 +117,7 @@ def demo_affine_map_summed() -> None:
     z = (W @ x) + b
     relu_deriv_z = torch.where(z <= 0.0, 0.0, 1.0)
 
-    # Compute autograd (numerical) Hessian
+    # Compute autograd Hessian
     # - For a 3-tuple input (W, b, x) where the components have shapes (n, m),
     #   (n), and (m), respectively, this is a tuple of tuples `h` such that:
     #
@@ -110,25 +125,28 @@ def demo_affine_map_summed() -> None:
     #       h[0][1] ~ Hess_{W,b} f(W, b, x) has shape (n, m, n)
     #       h[0][2] ~ Hess_{W,x} f(W, b, x) has shape (n, m, m)
     #       h[1][0] ~ Hess_{b,W} f(W, b, x) has shape (n, n, m)
-    #       h[1][1] ~ Hess_{b,b} f(W, b, x) has shape (n, n)
-    #       h[1][2] ~ Hess_{b,x} f(W, b, x) has shape (n, m)
+    #       h[1][1] = Hess_{b,b} f(W, b, x) has shape (n, n)
+    #       h[1][2] = Hess_{b,x} f(W, b, x) has shape (n, m)
     #       h[2][0] ~ Hess_{x,W} f(W, b, x) has shape (m, n, m)
-    #       h[2][1] ~ Hess_{x,b} f(W, b, x) has shape (m, n)
-    #       h[2][2] ~ Hess_{x,x} f(W, b, x) has shape (m, m)
+    #       h[2][1] = Hess_{x,b} f(W, b, x) has shape (m, n)
+    #       h[2][2] = Hess_{x,x} f(W, b, x) has shape (m, m)
     #
+    #   The tilde ~ means "represents".
+    #
+    #   For the "tilde cases," the actual Hessian matrices can be recovered by
+    #   reshaping each h[i][j], as in the actual/expected comparisons below.
     hess_autograd = hessian(affine_map_summed, (W, b, x))
 
     # Compute blocks of expected (analytical) Hessian
     W_dim = n * m
-    k = relu_deriv_z * torch.ones(n, 1)
 
     hess_expected_WW = torch.zeros(W_dim, W_dim)
     hess_expected_Wb = torch.zeros(W_dim, n)
-    hess_expected_Wx = torch.kron(k, torch.eye(m))
+    hess_expected_Wx = torch.kron(relu_deriv_z, torch.eye(m))
     hess_expected_bW = torch.zeros(n, W_dim)
     hess_expected_bb = torch.zeros(n, n)
     hess_expected_bx = torch.zeros(n, m)
-    hess_expected_xW = torch.kron(k.transpose(-1, -2), torch.eye(m))
+    hess_expected_xW = torch.kron(relu_deriv_z.transpose(-1, -2), torch.eye(m))
     hess_expected_xb = torch.zeros(m, n)
     hess_expected_xx = torch.zeros(m, m)
 
