@@ -1,4 +1,4 @@
-"""Simple function to evaluate Hessians."""
+"""Simple function to evaluate Hessian bilinear products."""
 
 from typing import Union
 
