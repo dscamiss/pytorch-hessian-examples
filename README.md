@@ -1,2 +1,1 @@
-# pytorch-hessian-examples
-Example uses of PyTorch Hessian functions
+Examples comparing PyTorch's autograd-based Hessian calculations to analytical Hessians.
