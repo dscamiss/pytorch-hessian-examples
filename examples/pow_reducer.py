@@ -97,5 +97,5 @@ def demo_pow_reducer() -> None:
 
 
 if __name__ == "__main__":
-    set_seed()
+    set_seed(1)
     demo_pow_reducer()

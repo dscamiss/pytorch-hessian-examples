@@ -187,5 +187,5 @@ def demo_affine_map_summed() -> None:
 
 
 if __name__ == "__main__":
-    set_seed()
+    set_seed(1)
     demo_affine_map_summed()

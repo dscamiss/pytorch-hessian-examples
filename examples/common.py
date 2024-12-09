@@ -6,9 +6,12 @@ import numpy as np
 import torch
 
 
-def set_seed() -> None:
-    """Set random seeds etc. to attempt reproducibility."""
-    seed = 22
+def set_seed(seed: int) -> None:
+    """Set random seeds etc. to attempt reproducibility.
+
+    Args:
+        seed: Random seed value.
+    """
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
