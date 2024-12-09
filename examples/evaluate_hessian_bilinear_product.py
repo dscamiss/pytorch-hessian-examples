@@ -18,6 +18,7 @@ _HessianType = Union[_HessianSingleInputType, _HessianMultiInputType]
 _InputType = Union[Float[Tensor, "..."], tuple[Float[Tensor, "..."], ...]]
 
 # pylint: disable=consider-using-enumerate
+# pylint: disable=invalid-name
 
 
 @jaxtyped(typechecker=typechecker)

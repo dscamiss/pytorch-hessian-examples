@@ -1,6 +1,5 @@
 """Example: The `pow_reducer()` function from PyTorch docs."""
 
-import emoji
 import torch
 from jaxtyping import Float, jaxtyped
 from torch import Tensor
@@ -73,8 +72,8 @@ def demo_pow_reducer() -> None:
     hess_expected = 6.0 * torch.diag(x)
 
     # Compare autograd and expected Hessians
-    error_msg = "Mismatched Hessians of pow_reducer() for vector input"
-    assert torch.all(hess_autograd == hess_expected), error_msg
+    err_msg = "Mismatched Hessians of pow_reducer() for vector input"
+    assert torch.all(hess_autograd == hess_expected), err_msg
 
     # Case 2: Higher-order tensor input
     x = torch.randn(4, 5, 6)
@@ -89,11 +88,10 @@ def demo_pow_reducer() -> None:
     hess_expected = 6.0 * torch.diag(x.flatten())
 
     # Compare autograd and expected Hessians
-    # -- Reshaping the expected Hessian orders the components to match
     err_msg = "Mismatched Hessians of pow_reducer() for higher-order tensor input"
-    assert torch.all(hess_autograd == hess_expected.reshape(hess_autograd.shape)), err_msg
+    assert torch.all(hess_autograd.view(hess_expected.shape) == hess_expected), err_msg
 
-    print(emoji.emojize(":sparkles: success! :sparkles:"))
+    print("Autograd Hessian matches analytical Hessian")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
 """Example: Sum the outputs of an affine map with ReLU activation."""
 
-import emoji
 import torch
 from jaxtyping import Float, jaxtyped
 from torch import Tensor
@@ -173,17 +172,17 @@ def demo_affine_map_summed() -> None:
     hess_autograd_xb = hess_autograd[2][1]
     hess_autograd_xx = hess_autograd[2][2]
 
-    assert torch.all(hess_autograd_WW.reshape(WW_shape) == hess_expected_WW), err_msg + "(W, W)"
-    assert torch.all(hess_autograd_Wb.reshape(Wb_shape) == hess_expected_Wb), err_msg + "(W, b)"
-    assert torch.all(hess_autograd_Wx.reshape(Wx_shape) == hess_expected_Wx), err_msg + "(W, x)"
-    assert torch.all(hess_autograd_bW.reshape(bW_shape) == hess_expected_bW), err_msg + "(b, W)"
-    assert torch.all(hess_autograd_bb.reshape(bb_shape) == hess_expected_bb), err_msg + "(b, b)"
-    assert torch.all(hess_autograd_bx.reshape(bx_shape) == hess_expected_bx), err_msg + "(b, x)"
-    assert torch.all(hess_autograd_xW.reshape(xW_shape) == hess_expected_xW), err_msg + "(x, W)"
-    assert torch.all(hess_autograd_xb.reshape(xb_shape) == hess_expected_xb), err_msg + "(x, b)"
-    assert torch.all(hess_autograd_xx.reshape(xx_shape) == hess_expected_xx), err_msg + "(x, x)"
+    assert torch.all(hess_autograd_WW.view(WW_shape) == hess_expected_WW), err_msg + "(W, W)"
+    assert torch.all(hess_autograd_Wb.view(Wb_shape) == hess_expected_Wb), err_msg + "(W, b)"
+    assert torch.all(hess_autograd_Wx.view(Wx_shape) == hess_expected_Wx), err_msg + "(W, x)"
+    assert torch.all(hess_autograd_bW.view(bW_shape) == hess_expected_bW), err_msg + "(b, W)"
+    assert torch.all(hess_autograd_bb.view(bb_shape) == hess_expected_bb), err_msg + "(b, b)"
+    assert torch.all(hess_autograd_bx.view(bx_shape) == hess_expected_bx), err_msg + "(b, x)"
+    assert torch.all(hess_autograd_xW.view(xW_shape) == hess_expected_xW), err_msg + "(x, W)"
+    assert torch.all(hess_autograd_xb.view(xb_shape) == hess_expected_xb), err_msg + "(x, b)"
+    assert torch.all(hess_autograd_xx.view(xx_shape) == hess_expected_xx), err_msg + "(x, x)"
 
-    print(emoji.emojize(":sparkles: success! :sparkles:"))
+    print("Autograd Hessian matches analytical Hessian")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
 """Example: The `pow_adder_reducer()` function from PyTorch docs."""
 
-import emoji
 import torch
 from jaxtyping import Float, jaxtyped
 from torch import Tensor
@@ -147,12 +146,12 @@ def demo_pow_adder_reducer() -> None:
     hess_autograd_yx = hess_autograd[1][0]
     hess_autograd_yy = hess_autograd[1][1]
 
-    assert torch.all(hess_autograd_xx.reshape(xx_shape) == hess_expected_xx), err_msg + "(x, x)"
-    assert torch.all(hess_autograd_xy.reshape(xy_shape) == hess_expected_xy), err_msg + "(x, y)"
-    assert torch.all(hess_autograd_yx.reshape(yx_shape) == hess_expected_yx), err_msg + "(y, x)"
-    assert torch.all(hess_autograd_yy.reshape(yy_shape) == hess_expected_yy), err_msg + "(y, y)"
+    assert torch.all(hess_autograd_xx.view(xx_shape) == hess_expected_xx), err_msg + "(x, x)"
+    assert torch.all(hess_autograd_xy.view(xy_shape) == hess_expected_xy), err_msg + "(x, y)"
+    assert torch.all(hess_autograd_yx.view(yx_shape) == hess_expected_yx), err_msg + "(y, x)"
+    assert torch.all(hess_autograd_yy.view(yy_shape) == hess_expected_yy), err_msg + "(y, y)"
 
-    print(emoji.emojize(":sparkles: success! :sparkles:"))
+    print("Autograd Hessian matches analytical Hessian")
 
 
 if __name__ == "__main__":
