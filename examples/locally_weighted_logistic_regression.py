@@ -126,6 +126,8 @@ def demo_locally_weighted_logistic_regression() -> None:
     err_msg = "Mismatched Hessians of likelihood() for vector input"
     assert torch.allclose(hess_autograd, hess_expected), err_msg
 
+    print("Autograd Hessian matches analytical Hessian")
+
 
 if __name__ == "__main__":
     set_seed(1)
