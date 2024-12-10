@@ -31,7 +31,8 @@ def affine_map_summed(
 def demo_affine_map_summed() -> None:
     """Demo Hessian calculation for `affine_map_summed()`.
 
-    Observe that f: R^{n x m} x R^n x R^m -> R can be written as
+    Observe that f: R^{n x m} x R^n x R^m -> R (the `affine_map_summed()`
+    function) can be written as
 
         f(W, b, x) = <1_n, ReLU(W x + b)>,
 

@@ -24,7 +24,8 @@ def pow_adder_reducer(x: Float[Tensor, "..."], y: Float[Tensor, "..."]) -> Float
         ValueError: If there is a shape mismatch between x and y.
 
     Reference:
-        https://pytorch.org/docs/stable/generated/torch.autograd.functional.hessian.html
+        https://pytorch.org/docs/stable/generated/
+            torch.autograd.functional.hessian.html
     """
     if x.shape != y.shape:
         raise ValueError("Shape mismatch between x and y arguments")
@@ -35,7 +36,8 @@ def pow_adder_reducer(x: Float[Tensor, "..."], y: Float[Tensor, "..."]) -> Float
 def demo_pow_adder_reducer() -> None:
     """Demo Hessian calculation for `pow_adder_reducer()`.
 
-    Observe that f: R^n x R^n --> R can be written as
+    Observe that f: R^n x R^n --> R (the `pow_adder_reducer()` function) can
+    be written as
 
         f(x, y) = 2 <1_n, s(x)> + 3 <1_n, s(y)>
 

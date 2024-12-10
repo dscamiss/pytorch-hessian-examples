@@ -20,7 +20,8 @@ def pow_reducer(x: Float[Tensor, "..."]) -> Float[Tensor, ""]:
         Scalar output tensor.
 
     Reference:
-        https://pytorch.org/docs/stable/generated/torch.autograd.functional.hessian.html
+        https://pytorch.org/docs/stable/generated/
+            torch.autograd.functional.hessian.html
     """
     return x.pow(3.0).sum()
 
@@ -28,7 +29,7 @@ def pow_reducer(x: Float[Tensor, "..."]) -> Float[Tensor, ""]:
 def demo_pow_reducer() -> None:
     """Demo Hessian calculation for `pow_reducer()`.
 
-    Observe that f: R^n --> R can be written as
+    Observe that f: R^n --> R (the `pow_reducer()` function) can be written as
 
         f(x) = <1_n, k(x)>,
 
