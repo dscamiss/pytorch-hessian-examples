@@ -2,7 +2,7 @@
 
 import torch
 from jaxtyping import Float, jaxtyped
-from torch import Tensor, nn
+from torch import Tensor, linalg, nn
 from torch.autograd.functional import hessian
 from typeguard import typechecked as typechecker
 
@@ -10,6 +10,7 @@ from examples.common import set_seed
 
 # pylint: disable=too-few-public-methods
 # pylint: disable=invalid-name
+# pylint: disable=not-callable
 
 
 class _Likelihood:
@@ -46,7 +47,7 @@ class _Likelihood:
             Scalar output tensor.
         """
         bce_loss = nn.BCEWithLogitsLoss(weight=self._w, reduction="sum")
-        reg = (-self._lamb / 2.0) * (torch.norm(theta) ** 2.0)
+        reg = (-self._lamb / 2.0) * (linalg.vector_norm(theta) ** 2.0)
         h = torch.inner(theta, self._X)
         return reg - bce_loss(h, self._y)
 
@@ -121,8 +122,8 @@ def demo_locally_weighted_logistic_regression() -> None:
 
     # Compare autograd and expected Hessians
     # - We use `torch.allclose()` here because the Hessian of the norm-squared
-    #   term is incorrect, in the sense that it contains extraneous values
-    #   which are small but non-negligible.  Tested with PyTorch 2.3.0 on CPU.
+    #   term has small off-diagonal components.  This is caused by
+    #   floating-point errors in differentiation of `linalg.vector_norm()`.
     err_msg = "Mismatched Hessians of likelihood() for vector input"
     assert torch.allclose(hess_autograd, hess_expected), err_msg
 
